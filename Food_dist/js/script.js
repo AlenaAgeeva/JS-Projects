@@ -36,11 +36,16 @@ window.addEventListener("DOMContentLoaded", () => {
 const deadline = "2023-06-11";
 
 function getTimeRemaining(endtime) {
-  const t = Date.parse(endtime) - Date.parse(new Date()),
-    days = Math.floor(t / (1000 * 60 * 60 * 24)),
-    seconds = Math.floor((t / 1000) % 60),
-    minutes = Math.floor((t / 1000 / 60) % 60),
-    hours = Math.floor((t / (1000 * 60 * 60)) % 24);
+  let days, hours, minutes, seconds;
+  const t = Date.parse(endtime) - Date.parse(new Date());
+  if (t <= 0) {
+    (days = 0), (hours = 0), (minutes = 0), (seconds = 0);
+  } else {
+    (days = Math.floor(t / (1000 * 60 * 60 * 24))),
+      (seconds = Math.floor((t / 1000) % 60)),
+      (minutes = Math.floor((t / 1000 / 60) % 60)),
+      (hours = Math.floor((t / (1000 * 60 * 60)) % 24));
+  }
 
   return {
     total: t,
@@ -82,5 +87,91 @@ function setClock(selector, endtime) {
     }
   }
 }
-
 setClock(".timer", deadline);
+//Modal
+const modalTrigger = document.querySelectorAll("[data-modal]"),
+  modal = document.querySelector(".modal"),
+  modalCloseBtn = document.querySelector("[data-close]");
+modalCloseBtn.addEventListener("click", closeModal);
+modalTrigger.forEach((i) => {
+  i.addEventListener("click", openModal);
+});
+function closeModal() {
+  modal.classList.add("hide");
+  modal.classList.remove("show");
+  document.body.style.overflow = "";
+}
+function openModal() {
+  modal.classList.add("show");
+  modal.classList.remove("hide");
+  document.body.style.overflow = "hidden";
+  clearInterval(modalTimerId);
+}
+modal.addEventListener("click", closeModal);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && modal.classList.contains("show")) {
+    closeModal();
+  }
+});
+function showModalByScroll() {
+  if (
+    window.pageYOffset + document.documentElement.clientHeight >=
+    document.documentElement.scrollHeight
+  ) {
+    openModal();
+    window.removeEventListener("scroll", showModalByScroll);
+  }
+}
+//const modalTimerId = setTimeout(openModal, 5000);
+window.addEventListener("scroll", showModalByScroll);
+// Classes for bottom menu cards
+class MenuCard {
+  constructor(img, imgAlt, h3, decr, price, parentSelector, ...classes) {
+    this.img = img;
+    this.imgAlt = imgAlt;
+    this.h3 = h3;
+    this.decr = decr;
+    this.price = price;
+    this.classes = classes;
+    this.parent = document.querySelector(parentSelector);
+    this.transfer = 27;
+    this.changeCurrency();
+  }
+  changeCurrency() {
+    this.price = +this.price * this.transfer;
+  }
+  render() {
+    const element = document.createElement("div");
+    if (this.classes.length === 0) {
+      this.classes = ["menu__item"];
+      element.classList.add("menu__item");
+    } else {
+      this.classes.forEach((cl) => {
+        element.classList.add(cl);
+      });
+    }
+
+    element.innerHTML = `
+            <img src=${this.img} alt=${this.imgAlt} />
+            <h3 class="menu__item-subtitle">${this.h3}</h3>
+            <div class="menu__item-descr">
+              ${this.decr}
+            </div>
+            <div class="menu__item-divider"></div>
+            <div class="menu__item-price">
+            <div class="menu__item-cost">Цена:</div>
+            <div class="menu__item-total"><span>${this.price}</span> грн/день</div>
+    `;
+    this.parent.append(element);
+  }
+}
+new MenuCard(
+  "img/tabs/post.jpg",
+  "post",
+  'Меню "Постное"',
+  "Меню “Постное” - это тщательный подбор ингредиентов: полное",
+  9,
+  ".menu .container"
+  //"menu__item",
+  //"big"
+).render();
